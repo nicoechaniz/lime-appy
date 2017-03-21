@@ -10,7 +10,7 @@ class LiMeApi(object):
     def _send(self, method, params):
         self.call_id += 1
         call = {"jsonrpc": "2.0", "id":self.call_id, "method": method, "params": params}
-        print("Sending", call)
+        print("\nSending", call)
         self.connection.send(json.dumps(call))
         print("Sent")
         print("Receiving...")
@@ -61,7 +61,12 @@ class LiMeApi(object):
     def get_stations(self, iface):
         return self._send(method="call", params=[session_token,"/lime/api",
                                                  "get_stations", {"iface": iface}])
-
+    def get_station_signal(self, iface, station_mac):
+        return self._send(method="call", params=[session_token,"/lime/api", "get_station_signal",
+                                                 {"iface": iface, "station_mac": station_mac}])
+    def get_assoclist(self, iface):
+        return self._send(method="call", params=[session_token,"/lime/api",
+                                                 "get_assoclist", {"iface": iface}])
     def close(self):
         self.connection.close()
 
@@ -75,13 +80,19 @@ if __name__ == "__main__":
     challenge_res = ws.challenge()
     session_token = ws.login(challenge_res)
 
-    res = ws.get_hostname()
-    res = ws.get_location()
-    res = ws.get_neighbors()
-    res = ws.get_bmx6()
-    res = ws.set_location(-31,-64)
-    res = ws.get_interfaces()
-    res = ws.get_stations("wlan1-adhoc")
+    ws.get_hostname()
+    ws.get_location()
+    ws.get_neighbors()
+    ws.get_bmx6()
+    ws.set_location(-31,-64)
 
+    res = ws.get_interfaces()
+    iface = json.loads(res)["result"]["interfaces"][0]
+    ws.get_assoclist(iface)
+
+    res = ws.get_stations(iface)
+    station = json.loads(res)["result"].popitem()[0]
+    res = ws.get_station_signal(iface, station)
+ 
     ws.close()
 
