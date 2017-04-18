@@ -1,6 +1,7 @@
 from websocket import create_connection
 import json
 import hashlib
+import sys
 
 class LiMeApi(object):
     def __init__(self, url):
@@ -87,16 +88,7 @@ class LiMeApi(object):
     def close(self):
         self.connection.close()
 
-if __name__ == "__main__":
-    user = r"admin"
-    password = r"admin"
-
-    ws = LiMeApi("ws://10.5.0.6/websocket/")
-
-    ws.list_methods()
-    challenge_res = ws.challenge()
-    session_token = ws.login(challenge_res)
-
+def run_tests(ws):
     ws.get_hostname()
     ws.get_location()
     ws.get_neighbors()
@@ -120,8 +112,26 @@ if __name__ == "__main__":
     for i in range(1, len(res)+1):
         ws.get_metrics(res[str(i)])
 
-    ws.get_gateway_metrics()
     ws.get_internet_path_metrics()
     
+if __name__ == "__main__":
+    user = r"admin"
+    password = r"admin"
+    ws = LiMeApi("ws://thisnode.info/websocket/")
+    ws.list_methods()
+    challenge_res = ws.challenge()
+    session_token = ws.login(challenge_res)
+    args_count = len(sys.argv)
+    if args_count==1:
+        run_tests(ws)
+    else:
+        method_name = sys.argv[1]
+        method = getattr(ws, method_name)
+        params=[]
+        if args_count>2:
+            for arg in sys.argv[2:]:
+                params.append(arg)
+        method(*params)
+
     ws.close()
 
