@@ -6,7 +6,9 @@ This is a Python library and minimalistic command line utility to test and acces
 
 To use this tool and run it's tests you need access to a router with LibreMesh installed. The tool will try to access thisnode.info by default and run it's tests and commands against the api exposed by the node in that address.
 
-To run the tests just execute:
+You'll need the jsonschema python module in order to run the tests.
+
+Then just execute:
 
 ```
 python3 tests.py
