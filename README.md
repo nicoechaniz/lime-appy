@@ -16,7 +16,7 @@ python3 tests.py
 
 ### Accessing the api
 
-To access a specific method execute:
+To access a specific method in the default host thisnode.info, execute:
 
 ```
 python3 lime.py [method_name]
@@ -31,4 +31,9 @@ python3 lime.py get_hostname
 will return the node hostname.
 
 
-The code in lime.py should be self explanatory.
+To get help run:
+
+```
+python3 lime.py --help
+```
+

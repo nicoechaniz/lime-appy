@@ -3,8 +3,6 @@
 from websocket import create_connection
 import json
 import hashlib
-import sys
-import argparse
 
 class LiMeApi(object):
     def __init__(self, base_node="thisnode.info", user="admin", password="admin"):
@@ -14,29 +12,29 @@ class LiMeApi(object):
         self.connection = create_connection(url)
         self.call_id = 0
         self.session_token = None
-        self.verbose = False
+        self.verbosity = 0
 
     def _send(self, method, params):
         self.call_id += 1
         call = {"jsonrpc": "2.0", "id":self.call_id, "method": method, "params": params}
-        if self.verbose:
+        if self.verbosity:
             print("\nSending", call)
         self.connection.send(json.dumps(call))
-        if self.verbose:
+        if self.verbosity:
             print("Sent")
             print("Receiving...")
         result =  self.connection.recv()
-        if self.verbose:
+        if self.verbosity:
             print("Received '%s'" % result)
         return result
 
-    def list_methods(self):
+    def _list_methods(self):
         return self._send(method="list", params=["","*"])
 
-    def challenge(self):
+    def _challenge(self):
         return self._send(method="challenge", params=[])
 
-    def login(self, challenge_result):
+    def _login(self, challenge_result):
         shapass = hashlib.new("sha1")
         shatok = hashlib.new("sha1")
         r = json.loads(challenge_result)
@@ -133,31 +131,62 @@ class LiMeApi(object):
                                  "get_internet_path_metrics", {}])
         return json.loads(res)["result"]
 
+    def get_last_internet_path(self):
+        res = self._send(method="call",
+                         params=[self.session_token,"/lime/api",
+                                 "get_last_internet_path", {}])
+        return json.loads(res)["result"]
+
+    def get_internet_status(self):
+        res = self._send(method="call",
+                         params=[self.session_token,"/lime/api",
+                                 "get_internet_status", {}])
+        return json.loads(res)["result"]
+
     def get_path_metrics(self, target):
         path = json.loads(self.get_path(target))
         res = path["result"]
         for i in range(1, len(res)+1):
             self.get_metrics(res[str(i)])
 
-    def close(self):
+    def get_notes(self):
+        res = self._send(method="call",
+                         params=[self.session_token,"/lime/api",
+                                 "get_notes", {}])
+        return json.loads(res)["result"]
+
+    def set_notes(self, text):
+        res = self._send(method="call",
+                         params=[self.session_token,"/lime/api",
+                                 "set_notes", {"text":text}])
+        return json.loads(res)["result"]
+
+    def _close(self):
         self.connection.close()
 
 if __name__ == "__main__":
-    ws = LiMeApi(base_node="thisnode.info", user="admin", password="admin")
-    ws.verbose = True
-    ws.list_methods()
-    challenge_res = ws.challenge()
-    ws.login(challenge_res)
+    import inspect
+    import argparse
+    parser = argparse.ArgumentParser()
+    method_choices = [method[0] for method in inspect.getmembers(LiMeApi, predicate=inspect.isfunction)
+                      if method[0].startswith("get_") or method[0].startswith("set_")]
+    parser.add_argument("-b", "--base_node", help="node hostname to use for your api call", default="thisnode.info")
+    parser.add_argument("--user", help="orangerpc username to use", default="admin")
+    parser.add_argument("--password", help="orangerpc password to use", default="admin")
+    parser.add_argument("-v", "--verbosity", help="verbosity level of command output", default=0)
+    parser.add_argument("method", help="api method to call", choices=method_choices)
+    parser.add_argument("method_params", nargs="*", help="method parameters")
+    args = parser.parse_args()
+
+    ws = LiMeApi(base_node=args.base_node, user=args.user, password=args.password)
+    ws.verbosity = args.verbosity
+    ws._list_methods()
+    challenge_res = ws._challenge()
+    ws._login(challenge_res)
+
+    if not args.method.startswith("_"):
+        method = getattr(ws, args.method)
+        res = method(*args.method_params)
+        print(res)
     
-    args_count = len(sys.argv)
-    if args_count==1:
-        run_tests(ws)
-    else:
-        method_name = sys.argv[1]
-        method = getattr(ws, method_name)
-        params=[]
-        if args_count>2:
-            for arg in sys.argv[2:]:
-                params.append(arg)
-        res = method(*params)
-    ws.close()
+    ws._close()

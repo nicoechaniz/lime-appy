@@ -11,17 +11,18 @@ class ApiTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ws = LiMeApi(base_node=cls.base_node, user=cls.user, password=cls.password)
-        cls.ws.list_methods()
-        challenge_res = cls.ws.challenge()
-        cls.ws.login(challenge_res)
+        cls.ws.verbosity = 0
+        cls.ws._list_methods()
+        challenge_res = cls.ws._challenge()
+        cls.ws._login(challenge_res)
         cls.ws.verbose = False
 
     @classmethod
     def tearDownClass(cls):
-        cls.ws.close()
+        cls.ws._close()
 
     def test_list_methods(self):
-        res = self.ws.list_methods()
+        res = self.ws._list_methods()
 
     def test_get_hostname(self):
         res = self.ws.get_hostname()
@@ -256,6 +257,80 @@ class ApiTest(unittest.TestCase):
                 }
             },
             "required": ["status", "metrics"]
+        }
+        validate(res, schema)
+        self.assertEqual(res["status"], "ok")
+
+    def test_get_last_internet_path(self):
+        res = self.ws.get_last_internet_path()
+        schema = {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string"},
+                "path": {"type": "array"},
+            },
+            "required": ["status","path"]
+        }
+        validate(res, schema)
+        self.assertEqual(res["status"], "ok")
+
+    def test_get_internet_status(self):
+        res = self.ws.get_internet_status()
+        # orangerpc casts true and false to 1 and 0 respectively so types here is number instead of boolean
+        schema = {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string"},
+                "IPv4": {
+                    "type": "object",
+                    "properties": {
+                        "reachable": {"type": "number"}
+                    },
+                    "required": ["reachable"]
+                },
+                "IPv6": {
+                    "type": "object",
+                    "properties": {
+                        "reachable": {"type": "number"}
+                    },
+                    "required": ["reachable"]
+                },
+                "DNS": {
+                    "type": "object",
+                    "properties": {
+                        "working": {"type": "number"}
+                    },
+                    "required": ["working"]
+                },
+            },
+            "required": ["status","IPv4", "IPv6", "DNS"]            
+            }
+        validate(res, schema)
+        self.assertEqual(res["status"], "ok")
+
+    def test_get_notes(self):
+        res = self.ws.get_notes()
+        schema = {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string"},
+                "notes": {"type": "string"},
+            },
+            "required": ["status","notes"]
+        }
+        validate(res, schema)
+        self.assertEqual(res["status"], "ok")
+
+    def test_set_notes(self):
+        current_notes = self.ws.get_notes()["notes"]
+        res = self.ws.set_notes(current_notes)
+        schema = {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string"},
+                "notes": {"type": "string"},
+            },
+            "required": ["status","notes"]
         }
         validate(res, schema)
         self.assertEqual(res["status"], "ok")
