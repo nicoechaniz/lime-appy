@@ -55,7 +55,7 @@ class LiMeApi(object):
                          params=[self.session_token, "/lime/api",
                                  "get_hostname",{}])
         return json.loads(res)["result"]
-    
+
     def get_location(self):
         res = self._send(method="call", params=[self.session_token,"/lime/api",
                                                 "get_location",{}])
@@ -95,6 +95,13 @@ class LiMeApi(object):
                                  {"iface": iface, "station_mac": station_mac}])
         return json.loads(res)["result"]
 
+    def get_station_traffic(self, iface, station_mac):
+        res = self._send(method="call",
+                         params=[self.session_token,"/lime/api",
+                                 "get_station_traffic",
+                                 {"iface": iface, "station_mac": station_mac}])
+        return json.loads(res)["result"]
+
     def get_assoclist(self, iface):
         res = self._send(method="call",
                          params=[self.session_token,"/lime/api",
@@ -111,7 +118,7 @@ class LiMeApi(object):
         res = self._send(method="call",
                          params=[self.session_token,"/lime/api",
                                  "get_path", {"target":target}])
-        
+
         return json.loads(res)["result"]
 
     def get_metrics(self, target):
@@ -141,6 +148,12 @@ class LiMeApi(object):
         res = self._send(method="call",
                          params=[self.session_token,"/lime/api",
                                  "get_internet_status", {}])
+        return json.loads(res)["result"]
+
+    def get_node_status(self):
+        res = self._send(method="call",
+                         params=[self.session_token,"/lime/api",
+                                 "get_node_status", {}])
         return json.loads(res)["result"]
 
     def get_path_metrics(self, target):
@@ -188,5 +201,5 @@ if __name__ == "__main__":
         method = getattr(ws, args.method)
         res = method(*args.method_params)
         print(res)
-    
+
     ws._close()

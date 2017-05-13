@@ -15,7 +15,6 @@ class ApiTest(unittest.TestCase):
         cls.ws._list_methods()
         challenge_res = cls.ws._challenge()
         cls.ws._login(challenge_res)
-        cls.ws.verbose = False
 
     @classmethod
     def tearDownClass(cls):
@@ -46,7 +45,7 @@ class ApiTest(unittest.TestCase):
                 "lon": {"type": "string"},
                 "lat": {"type": "string"},
             },
-            "required": ["status","lon","lat"]
+            "required": ["status", "lon", "lat"]
         }
         validate(res, schema)
         self.assertEqual(res["status"], "ok")
@@ -65,11 +64,11 @@ class ApiTest(unittest.TestCase):
                 "status": {"type": "string"},
                 "nodes": {"type": "array"},
             },
-            "required": ["status","nodes"]
+            "required": ["status", "nodes"]
         }
         validate(res, schema)
         self.assertEqual(res["status"], "ok")
-        
+
     def test_get_interfaces(self):
         res = self.ws.get_interfaces()
         schema = {
@@ -78,7 +77,7 @@ class ApiTest(unittest.TestCase):
                 "status": {"type": "string"},
                 "interfaces": {"type": "array"},
             },
-            "required": ["status","interfaces"]
+            "required": ["status", "interfaces"]
         }
         validate(res, schema)
         self.assertEqual(res["status"], "ok")
@@ -99,7 +98,7 @@ class ApiTest(unittest.TestCase):
                             "station_mac": {"type": "string"},
                             "attributes": {"$ref": "#/definitions/station_attributes"},
                         },
-                        "required": ["link_type","station_hostname","station_mac","attributes"]
+                        "required": ["link_type", "station_hostname", "station_mac", "attributes"]
                     },
                 },
                 "station_attributes": {
@@ -117,11 +116,11 @@ class ApiTest(unittest.TestCase):
                 "status": {"type": "string"},
                 "stations": {"$ref": "#/definitions/stations"},
             },
-            "required": ["status","stations"]
+            "required": ["status", "stations"]
         }
         validate(res, schema)
         self.assertEqual(res["status"], "ok")
-    
+
     def test_get_iface_stations(self):
         res = self.ws.get_interfaces()
         iface = res["interfaces"][0]
@@ -139,8 +138,11 @@ class ApiTest(unittest.TestCase):
                             "iface": {"type": "string"},
                             "signal": {"type": "string"},
                             "hostname": {"type": "string"},
+                            "rx_packets": {"type": "number"},
+                            "tx_packets": {"type": "number"}
                         },
-                        "required": ["mac", "iface", "signal", "hostname"]
+                        "required": ["mac", "iface", "signal", "hostname",
+                                     "rx_packets", "tx_packets"]
                     }
                 }
             },
@@ -167,6 +169,25 @@ class ApiTest(unittest.TestCase):
         validate(res, schema)
         self.assertEqual(res["status"], "ok")
 
+    def test_get_station_traffic(self):
+        res = self.ws.get_interfaces()
+        iface = res["interfaces"][0]
+        res = self.ws.get_iface_stations(iface)
+        station = res["stations"][0]["mac"]
+        res = self.ws.get_station_traffic(iface, station)
+        schema = {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string"},
+                "station": {"type": "string"},
+                "rx_bytes": {"type": "number"},
+                "tx_bytes": {"type": "number"},
+            },
+            "required": ["status", "station", "rx_bytes", "tx_bytes"]
+        }
+        validate(res, schema)
+        self.assertEqual(res["status"], "ok")
+
     def test_get_stations(self):
         res = self.ws.get_stations()
         schema = {
@@ -182,8 +203,11 @@ class ApiTest(unittest.TestCase):
                             "iface": {"type": "string"},
                             "signal": {"type": "string"},
                             "hostname": {"type": "string"},
+                            "rx_packets": {"type": "number"},
+                            "tx_packets": {"type": "number"}
                         },
-                        "required": ["mac", "iface", "signal", "hostname"]
+                        "required": ["mac", "iface", "signal", "hostname",
+                                     "rx_packets", "tx_packets"]
                     }
                 }
             },
@@ -303,8 +327,47 @@ class ApiTest(unittest.TestCase):
                     "required": ["working"]
                 },
             },
-            "required": ["status","IPv4", "IPv6", "DNS"]            
+            "required": ["status", "IPv4", "IPv6", "DNS"]
             }
+        validate(res, schema)
+        self.assertEqual(res["status"], "ok")
+
+    def test_get_node_status(self):
+        res = self.ws.get_node_status()
+        schema = {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string"},
+                "hostname": {"type": "string"},
+                "ips": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "version": {"type": "string"},
+                            "address": {"type": "string"},
+                        },
+                        "required": ["version", "address"]
+                    },
+                },
+                "most_active": {
+                        "type": "object",
+                        "properties": {
+                            "mac": {"type": "string"},
+                            "iface": {"type": "string"},
+                            "signal": {"type": "string"},
+                            "hostname": {"type": "string"},
+                            "rx_packets": {"type": "number"},
+                            "tx_packets": {"type": "number"},
+                            "rx_bytes": {"type": "number"},
+                            "tx_bytes": {"type": "number"},
+                        },
+                        "required": ["mac", "iface", "signal", "hostname",
+                                     "rx_packets", "tx_packets", "rx_bytes", "tx_bytes"]
+                }
+            },
+            "required": ["status","hostname","ips"]
+        }
         validate(res, schema)
         self.assertEqual(res["status"], "ok")
 
