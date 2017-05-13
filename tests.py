@@ -308,16 +308,16 @@ class ApiTest(unittest.TestCase):
                 "IPv4": {
                     "type": "object",
                     "properties": {
-                        "reachable": {"type": "number"}
+                        "working": {"type": "number"}
                     },
-                    "required": ["reachable"]
+                    "required": ["working"]
                 },
                 "IPv6": {
                     "type": "object",
                     "properties": {
-                        "reachable": {"type": "number"}
+                        "working": {"type": "number"}
                     },
-                    "required": ["reachable"]
+                    "required": ["working"]
                 },
                 "DNS": {
                     "type": "object",
